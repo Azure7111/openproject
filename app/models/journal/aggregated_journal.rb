@@ -243,6 +243,12 @@ class Journal::AggregatedJournal
     @data ||= "Journal::#{journable_type}Journal".constantize.find_by_journal_id(id)
   end
 
+  # The description of an aggregated journal can only be properly accessed if the latest change
+  # incorporates it by chance. This method provides the means to access it safely.
+  def description_id
+    Journal.where({journable_id: journal.journable_id, id: })
+  end
+
   # ARs automagic addition of dynamic columns (those not present in the physical table) seems
   # not to work with PostgreSQL and simply return a string for unknown columns.
   # Thus we need to ensure manually that this column is correctly casted.

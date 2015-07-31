@@ -136,7 +136,7 @@ class JournalManager
     if journal.data.nil?
       journal.data = create_journal_data journal.id, type, changed_data.except(:id)
     else
-      journal.changed_data = changed_data
+      journal.details = changed_data
       journal.attachable_journals.delete_all
       journal.customizable_journals.delete_all
     end
@@ -156,7 +156,7 @@ class JournalManager
                              journable_type: journal_class_name(journable.class),
                              version: version,
                              activity_type: journable.send(:activity_type),
-                             changed_data: journable.attributes.symbolize_keys }
+                             details: journable.attributes.symbolize_keys }
 
       create_journal journable, journal_attributes, user, notes
     end
@@ -166,17 +166,19 @@ class JournalManager
     type = base_class(journable.class)
     extended_journal_attributes = journal_attributes.merge(journable_type: journal_class_name(type))
                                   .merge(notes: notes)
-                                  .except(:changed_data)
+                                  .except(:details)
                                   .except(:id)
 
     unless extended_journal_attributes.has_key? :user_id
       extended_journal_attributes[:user_id] = user.id
     end
 
-    journal_attributes[:changed_data] = normalize_newlines(journal_attributes[:changed_data])
+    journal_attributes[:details] = normalize_newlines(journal_attributes[:details])
 
     journal = journable.journals.build extended_journal_attributes
-    journal.data = create_journal_data journal.id, type, valid_journal_attributes(type, journal_attributes[:changed_data])
+    journal.data = create_journal_data journal.id,
+                                       type,
+                                       valid_journal_attributes(type, journal_attributes[:details])
 
     create_association_data journable, journal
 
